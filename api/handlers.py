@@ -19,6 +19,7 @@ def index():
 @router.post('/imports')
 def imports_handler(import_form: ImportsForm = Body(..., embed=True), database=Depends(connect_db)):
     # добавляем новую imports в базу данных
+    database.add(imports())
     import_id = database.query(imports).all()[-1].import_id  # получаем номер imports
     for item in import_form.items:
         item_exists = database.query(items).filter(items.item_id == item.id).one_or_none()
@@ -59,6 +60,7 @@ def delete_handler(id: str, datetime: str = datetime.datetime.now().isoformat(),
     if delete_item:
         # удаляем сам элемент
         database.delete(delete_item)
+        database.delete(database.query(parents).filter(parents.item_id == delete_item.item_id).one_or_none())
         # удаляем все связи элемента
         find_all_files([], id, database, delete=True)
         database.commit()

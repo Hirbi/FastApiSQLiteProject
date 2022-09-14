@@ -33,5 +33,5 @@ def find_all_files(response: list, item_id, database, delete=False):
             find_all_files(response[-1]["children"], element.item_id, database, delete)
         if delete:
             database.delete(element)
-            database.delete(database.query(parents.item_id == element.item_id).one_or_none())
+            database.delete(database.query(parents).filter(parents.item_id == element.item_id).one_or_none())
     return response
