@@ -1,6 +1,6 @@
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, Depends, HTTPException
-import uuid
+from datetime import datetime
 from starlette import status
 from api.models import connect_db, items, parents
 from api.forms import ImportsForm, ItemForm, error400
@@ -83,3 +83,17 @@ def nodes_handler(id: str, database=Depends(connect_db)):
             pass
         return response
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Элемент не найден.')
+
+
+@router.get('/updates')
+def updates_handler(date: str, database=Depends(connect_db)):
+    if not datetime_valid(date):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail={"code": 400, "message": "Date is incorrect"})
+    date = datetime.fromisoformat(date.replace('Z', '+00:00'))
+    response = []
+    for item in database.query(items).all():
+        if abs(datetime.fromisoformat(item.created_at.replace('Z', '+00:00')) - date).seconds <= 86400:
+            # 86400 секунд в 24 часах
+            response.append(item)
+    return response
