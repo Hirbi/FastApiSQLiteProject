@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, Depends, HTTPException
-from datetime import datetime
+from datetime import datetime, timedelta
 from starlette import status
 from api.models import connect_db, items
 from api.forms import ImportsForm
@@ -104,9 +104,11 @@ def updates_handler(date: str, database=Depends(connect_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail={"code": 400, "message": "Date is incorrect"})
     date = datetime.fromisoformat(date.replace('Z', '+00:00'))
+    # return date, date - timedelta(days=1)
     response = []
     for item in database.query(items).all():
-        if abs(datetime.fromisoformat(item.created_at.replace('Z', '+00:00')) - date).seconds <= 86400:
+        item_date = datetime.fromisoformat(item.created_at.replace('Z', '+00:00'))
+        if date - timedelta(days=1) <= item_date <= date:
             # 86400 секунд в 24 часах
             response.append(item)
     database.close()

@@ -34,6 +34,12 @@ class ItemForm(BaseModel):
             return None
         return check_url
 
+    @validator('parentId', always=True)
+    def check_parent_id(cls, check_parentId):
+        if check_parentId == "":
+            return None
+        return check_parentId
+
     @validator('type', always=True)
     def type_and_size_validator(cls, check_type, values):
         '''Валидация по типу и папке,
@@ -58,9 +64,6 @@ class ItemForm(BaseModel):
 class ImportsForm(BaseModel):
     items: list[ItemForm]
     updateDate: Optional[str] = ""
-
-    class Config:
-        json_loads = dumps
 
     @validator('updateDate', always=True)
     def check_data(cls, check_date):
