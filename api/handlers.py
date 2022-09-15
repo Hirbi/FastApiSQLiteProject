@@ -96,4 +96,5 @@ def updates_handler(date: str, database=Depends(connect_db)):
         if abs(datetime.fromisoformat(item.created_at.replace('Z', '+00:00')) - date).seconds <= 86400:
             # 86400 секунд в 24 часах
             response.append(item)
+    database.close()
     return response
