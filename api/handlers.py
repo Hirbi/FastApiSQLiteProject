@@ -1,4 +1,3 @@
-import datetime
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, Depends, HTTPException
 import uuid
@@ -48,18 +47,18 @@ def imports_handler(import_form: ImportsForm = Body(...), database=Depends(conne
 
 
 @router.delete('/delete/{id}')
-def delete_handler(id: str, datetime: str = datetime.datetime.now().isoformat(), database=Depends(connect_db)):
-    if not datetime_valid(datetime):
+def delete_handler(id: str, date: str, database=Depends(connect_db)):
+    if not datetime_valid(date):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail={"code": 400, "message": "Date is incorrect"})
-    delete_item = database.query(items).filter(
-        items.item_id == id and items.created_at == datetime).one_or_none()
+    delete_item = database.query(items).filter(items.item_id == id).one_or_none()
     if delete_item:
         # удаляем сам элемент
         database.delete(delete_item)
-        database.delete(database.query(parents).filter(parents.item_id == delete_item.item_id).one_or_none())
         # удаляем все связи элемента
         find_all_files([], id, database, delete=True)
+        delete_item.created_at = date
+        check_parentid(delete_item, database, False)
         database.commit()
         database.close()
         raise HTTPException(status_code=status.HTTP_200_OK, detail='Удаление прошло успешно.')
