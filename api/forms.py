@@ -2,17 +2,11 @@ import json
 
 from pydantic import BaseModel, validator
 from typing import Optional
-from datetime import datetime
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
 from json import dumps
-
-from api.models import items
 from starlette import status
-from api.models import connect_db
-from api.utils import datetime_valid
 
-error400 = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                         detail={"code": 400, "message": "Невалидная схема документа или входные данные не верны."})
+from api.utils import datetime_valid
 
 
 class ItemForm(BaseModel):
@@ -22,18 +16,17 @@ class ItemForm(BaseModel):
     size: Optional[int] = 0
     type: str
 
-    class Config:
-        json_loads = json.dumps
-
     @validator('id', always=True)
     def id_must_be_not_null(cls, check_id):
+        '''Параметр id не должен быть None или "" '''
         if check_id is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail={"code": 400, "message": "id_must_be_not_null"})
+                                detail={"code": 400, "message": "Id must be not null"})
         return check_id
 
     @validator('url', always=True)
     def url_len_less_255(cls, check_url):
+        """Размер url должен быть меньше 256"""
         if len(check_url) > 255:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail={"code": 400, "message": "Url len must be less 256"})
@@ -41,15 +34,10 @@ class ItemForm(BaseModel):
             return None
         return check_url
 
-    @validator('parentId', always=True)
-    def parent_must_be_folder(cls, check_parentid):
-        if check_parentid == "" or check_parentid is None:
-            return None
-        database = connect_db()
-        return check_parentid
-
     @validator('type', always=True)
     def type_and_size_validator(cls, check_type, values):
+        '''Валидация по типу и папке,
+        Размер папки должен быть 0, размер файла != 0'''
         check_size = values.get("size")
         check_url = values.get("url")
         if check_type not in ("FOLDER", "FILE"):
@@ -76,6 +64,7 @@ class ImportsForm(BaseModel):
 
     @validator('updateDate', always=True)
     def check_data(cls, check_date):
+        '''Проверка формата даты'''
         if not datetime_valid(check_date):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail={"code": 400, "message": "Date is incorrect"})
