@@ -19,13 +19,6 @@ def main():
     )
     """)
 
-    session.execute("""
-        create table parents (  
-        item_id varchar(255) not null references items primary key,
-        parent_id varchar(255) references items
-        )
-        """)
-
     session.close()
 
 

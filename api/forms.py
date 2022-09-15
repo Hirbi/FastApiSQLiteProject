@@ -1,9 +1,6 @@
-import json
-
 from pydantic import BaseModel, validator
 from typing import Optional
 from fastapi import HTTPException
-from json import dumps
 from starlette import status
 
 from api.utils import datetime_valid

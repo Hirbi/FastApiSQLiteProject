@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from api.handlers import router
 
 import uvicorn

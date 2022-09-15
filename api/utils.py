@@ -1,5 +1,5 @@
 from datetime import datetime
-from api.models import connect_db, items, parents
+from api.models import connect_db, items
 from fastapi import HTTPException
 from starlette import status
 

@@ -28,10 +28,3 @@ class items(Base):
     type = Column(String)
     url = Column(String(255), max_lenght=256)
     created_at = Column(String, default=datetime.utcnow())
-
-
-class parents(Base):
-    __tablename__ = 'parents'
-
-    item_id = Column(String, ForeignKey('items.item_id'), primary_key=True)
-    parent_id = Column(String, ForeignKey('items.item_id'))
