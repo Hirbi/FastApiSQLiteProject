@@ -25,29 +25,38 @@ def find_all_files(response: list, item_id, database, delete=False):
                 "id": element.item_id,
                 "url": element.url,
                 "parentId": element.parent_id,
-                "size": element.size,
                 "type": element.type,
-                "date": element.created_at
+                "date": element.created_at,
+                "size": element.size,
+                "children": None
             }
         )
         if element.type == "FOLDER":
             response[-1]["children"] = []
             find_all_files(response[-1]["children"], element.item_id, database, delete)
+            response[-1]["size"] = sum([x.get("size", 0) for x in response[-1]["children"]])
+        else:
+            # response[-1]["size"] = element.size
+            pass
         if delete:
             database.delete(element)
             database.delete(database.query(parents).filter(parents.item_id == element.item_id).one_or_none())
     return response
 
 
-def check_parentid_and_type(item, item_exists, database):
+def check_parentid(item: items, database):
     # проверка, что parentId это папка
-    if item.parentId is not None:
-        if database.query(parents).filter(parents.parent_id == item.parentId).one_or_none() is None:
+    if item.parent_id is not None:
+        parent = database.query(items).filter(
+                items.item_id == item.parent_id and items.type == "FOLDER").one_or_none()
+        if parent is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail={"code": 400,
                                         "message": "ParentId must be a folder"})
-    # проверка на изменение type
-    if item_exists.type != item.type:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail={"code": 400,
-                                    "message": "Can't update type"})
+
+        parent.created_at = item.created_at
+
+        if parent.parent_id is not None:
+            check_parentid(parent, database)
+
+    return
