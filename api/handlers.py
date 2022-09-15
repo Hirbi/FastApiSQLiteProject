@@ -10,11 +10,6 @@ from starlette.responses import Response
 router = APIRouter()
 
 
-@router.get('/')
-def index():
-    return {'status': 200}
-
-
 @router.post('/imports')
 def imports_handler(import_form: ImportsForm = Body(...), database=Depends(connect_db)):
     # добавляем новую imports в базу данных
@@ -58,7 +53,9 @@ def delete_handler(id: str, date: str, database=Depends(connect_db)):
         # удаляем все связи элемента
         find_all_files([], id, database, delete=True)
         delete_item.created_at = date
-        check_parentid(delete_item, database, False)
+        # обновляем дату у всех элемнтов связанных с удалённым
+        check_parentid(delete_item, database)
+
         database.commit()
         database.close()
         raise HTTPException(status_code=status.HTTP_200_OK, detail='Удаление прошло успешно.')

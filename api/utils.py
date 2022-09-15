@@ -40,12 +40,12 @@ def find_all_files(response: list, item_id, database, delete=False):
     return response
 
 
-def check_parentid(item: items, database, check=True):
+def check_parentid(item: items, database):
     # проверка, что parentId это папка
     if item.parent_id is not None:
         parent = database.query(items).filter(
                 items.item_id == item.parent_id and items.type == "FOLDER").one_or_none()
-        if parent is None and check:
+        if parent is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail={"code": 400,
                                         "message": "ParentId must be a folder"})
@@ -53,6 +53,6 @@ def check_parentid(item: items, database, check=True):
         parent.created_at = item.created_at
 
         if parent.parent_id is not None:
-            check_parentid(parent, database, check)
+            check_parentid(parent, database)
 
     return
