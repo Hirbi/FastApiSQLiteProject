@@ -1,5 +1,7 @@
 from datetime import datetime
 from api.models import connect_db, items, parents
+from fastapi import HTTPException
+from starlette import status
 
 
 def datetime_valid(dt_str):
@@ -35,3 +37,17 @@ def find_all_files(response: list, item_id, database, delete=False):
             database.delete(element)
             database.delete(database.query(parents).filter(parents.item_id == element.item_id).one_or_none())
     return response
+
+
+def check_parentid_and_type(item, item_exists, database):
+    # проверка, что parentId это папка
+    if item.parentId is not None:
+        if database.query(parents).filter(parents.parent_id == item.parentId).one_or_none() is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail={"code": 400,
+                                        "message": "ParentId must be a folder"})
+    # проверка на изменение type
+    if item_exists.type != item.type:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail={"code": 400,
+                                    "message": "Can't update type"})

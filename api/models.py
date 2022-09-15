@@ -29,8 +29,9 @@ class items(Base):
     url = Column(String(255), max_lenght=256)
     created_at = Column(String, default=datetime.utcnow())
 
+
 class parents(Base):
     __tablename__ = 'parents'
-    id = Column(Integer, primary_key=True)
-    item_id = Column(String, ForeignKey('items.item_id'))
+
+    item_id = Column(String, ForeignKey('items.item_id'), primary_key=True)
     parent_id = Column(String, ForeignKey('items.item_id'))

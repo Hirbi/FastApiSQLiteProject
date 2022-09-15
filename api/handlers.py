@@ -3,9 +3,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, Depends, HTTPException
 import uuid
 from starlette import status
-from api.models import connect_db, items, imports, parents
+from api.models import connect_db, items, parents
 from api.forms import ImportsForm, ItemForm, error400
-from api.utils import datetime_valid, find_all_files
+from api.utils import datetime_valid, find_all_files, check_parentid_and_type
 from starlette.responses import Response
 
 router = APIRouter()
@@ -22,23 +22,29 @@ def imports_handler(import_form: ImportsForm = Body(...), database=Depends(conne
     for item in import_form.items:
         item_exists = database.query(items).filter(items.item_id == item.id).one_or_none()
         if item_exists:
+            check_parentid_and_type(item, item_exists, database)
+            '''
+            # проверка, что parentId это папка
+            if item.parentId is not None:
+                if database.query(parents).filter(parents.parent_id == item.parentId).one_or_none() is None:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                        detail={"code": 400,
+                                                "message": "ParentId must be a folder"})
+            # проверка на изменение type
             if item_exists.type != item.type:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail={"code": 400,
                                             "message": "Can't update type"})
-            item_exists.parent_id = item.parentId
-            item_exists.size = item.size
-            item_exists.url = item.url
-            item_exists.created_at = import_form.updateDate
+                                            '''
         else:
-            item_exists = items(
-                item_id=item.id,
-                parent_id=item.parentId,
-                size=item.size,
-                type=item.type,
-                url=item.url,
-                created_at=import_form.updateDate
-            )
+            # если не существует создаём новый
+            item_exists = items()
+        item_exists.item_id = item.id
+        item_exists.parent_id = item.parentId
+        item_exists.size = item.size
+        item_exists.type = item.type
+        item_exists.url = item.url
+        item_exists.created_at = import_form.updateDate
         new_relation = parents(item_id=item.id, parent_id=item.parentId)
         database.add(item_exists)
         database.add(new_relation)
