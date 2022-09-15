@@ -1,5 +1,5 @@
 import datetime
-
+from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Body, Depends, HTTPException
 import uuid
 from starlette import status
@@ -17,10 +17,8 @@ def index():
 
 
 @router.post('/imports')
-def imports_handler(import_form: ImportsForm = Body(..., embed=True), database=Depends(connect_db)):
+def imports_handler(import_form: ImportsForm = Body(...), database=Depends(connect_db)):
     # добавляем новую imports в базу данных
-    database.add(imports())
-    import_id = database.query(imports).all()[-1].import_id  # получаем номер imports
     for item in import_form.items:
         item_exists = database.query(items).filter(items.item_id == item.id).one_or_none()
         if item_exists:
@@ -28,7 +26,6 @@ def imports_handler(import_form: ImportsForm = Body(..., embed=True), database=D
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail={"code": 400,
                                             "message": "Can't update type"})
-            item_exists.import_id = import_id
             item_exists.parent_id = item.parentId
             item_exists.size = item.size
             item_exists.url = item.url
@@ -36,14 +33,13 @@ def imports_handler(import_form: ImportsForm = Body(..., embed=True), database=D
         else:
             item_exists = items(
                 item_id=item.id,
-                import_id=import_id,  # new_imports.import_id,
                 parent_id=item.parentId,
                 size=item.size,
                 type=item.type,
                 url=item.url,
                 created_at=import_form.updateDate
             )
-        new_relation = parents(import_id=import_id, item_id=item.id, parent_id=item.parentId)
+        new_relation = parents(item_id=item.id, parent_id=item.parentId)
         database.add(item_exists)
         database.add(new_relation)
     database.commit()

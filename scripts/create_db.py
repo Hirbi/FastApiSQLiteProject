@@ -11,7 +11,6 @@ def main():
     session.execute("""
     create table items (
     item_id varchar(255) not null primary key,
-    import_id integer not null, 
     parent_id varchar(255), 
     size integer,
     type varchar(255) default FILE,
@@ -21,15 +20,8 @@ def main():
     """)
 
     session.execute("""
-        create table imports (
-        import_id integer not null primary key references items
-        )
-        """)
-
-    session.execute("""
         create table parents (
         id integer primary key,
-        import_id integer not null  references items,
         item_id varchar(255) not null references items,
         parent_id varchar(255) references items
         )
